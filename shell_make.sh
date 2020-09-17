@@ -1,5 +1,18 @@
 #!/usr/bin/env bash
 
+check_deps_newer(){
+  target="${1}"
+  deps="${2}"
+  for dep in "${deps[@]}"; do
+      if [ -e "$target" ] && [ -e "$dep" ] && [ "$dep" -nt "$target" ]
+      then
+          needs_build=1
+          break
+      fi
+  done
+}
+
+
 generate_targets_need_run() {
   target="${1}"
   if ! [[ " ${run_targets[@]} " =~ " ${target} " ]]; then
@@ -27,6 +40,7 @@ available_targets=()
 targets=[]
 run_targets=()
 given_args=()
+needs_build=0
 
 for var in "$@"; do
   if [[ $var == "-f" ]]; then
@@ -55,7 +69,11 @@ while IFS= read -r line; do
     else
       dep="$(cut -d':' -f 2 <<<"$line")"
       dep="$(echo "$dep" | xargs)"
-      targets["$l_target"]=$dep
+      check_deps_newer $l_target $dep
+      if [[ $needs_build == 1 ]]; then
+          targets["$l_target"]=$dep
+      fi
+      needs_build=0
     fi
 
   else
@@ -75,6 +93,8 @@ while IFS= read -r line; do
     fi
   fi
 done <"$makefile"
+
+
 
 
 if [[ "${#given_args[@]}" == 0 ]]; then
