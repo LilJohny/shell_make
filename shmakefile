@@ -1,11 +1,12 @@
 hello: world test
-    echo Hello from first target
-    echo fourthline
+    echo hello
 
 world:
     echo I am the world
     echo sencondline
-    echo thirdline
 
-test:
+test: debug
     echo test
+
+debug:
+    echo debug
