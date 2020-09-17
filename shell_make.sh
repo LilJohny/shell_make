@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-generate_targets_need_run(){
+generate_targets_need_run() {
   target="${1}"
   if ! [[ " ${run_targets[@]} " =~ " ${target} " ]]; then
     run_targets+=("$target")
@@ -16,11 +16,10 @@ generate_targets_need_run(){
   done
 }
 
-execute_target_command(){
+execute_target_command() {
   target=$1
   eval "${recipes[$target]}"
 }
-
 
 makefile="shmakefile"
 next_arg_file=0
@@ -29,18 +28,16 @@ targets=[]
 run_targets=()
 given_args=()
 
-for var in "$@"
-do
-    if [[ $var == "-f" ]]; then
-      next_arg_file=1
-    elif [[ $next_arg_file == 1 ]]; then
-      makefile="$var"
-      next_arg_file=0
-    else
-      given_args+=("$var")
-    fi
+for var in "$@"; do
+  if [[ $var == "-f" ]]; then
+    next_arg_file=1
+  elif [[ $next_arg_file == 1 ]]; then
+    makefile="$var"
+    next_arg_file=0
+  else
+    given_args+=("$var")
+  fi
 done
-
 
 declare -A targets
 declare -A recipes
@@ -52,12 +49,12 @@ while IFS= read -r line; do
   if [[ $line == *":"* ]]; then
     current_command=""
     l_target="$(cut -d':' -f 1 <<<"$line")"
-    available_targets+=(l_target)
+    available_targets+=("$l_target")
     if [[ $line == *: ]]; then
       targets["$l_target"]=""
     else
       dep="$(cut -d':' -f 2 <<<"$line")"
-      dep="$(echo "$dep" |   xargs)"
+      dep="$(echo "$dep" | xargs)"
       targets["$l_target"]=$dep
     fi
 
@@ -81,22 +78,18 @@ done <"$makefile"
 
 
 if [[ "${#given_args[@]}" == 0 ]]; then
-    generate_targets_need_run "${targets[0]}"
+  generate_targets_need_run "${targets[0]}"
 else
-    for var in "${given_args[@]}"
-    do
-      if ! [[ " ${run_targets[@]} " =~ " ${var} " ]]; then
-          echo "$var" is not avaliable in Makefile
-          exit 1
-      fi
-      generate_targets_need_run "$var"
-    done
+  for var in "${given_args[@]}"; do
+    if ! [[ " ${available_targets[@]} " =~ " ${var} " ]]; then
+      echo "$var" is not avaliable in Makefile
+      exit 1
+    fi
+    generate_targets_need_run "$var"
+  done
 fi
 
-
-
-for (( i=${#run_targets[@]}-1 ; i>=0 ; i-- )) ;
-do
-    target="${run_targets[i]}"
-    execute_target_command "$target"
+for ((i = ${#run_targets[@]} - 1; i >= 0; i--)); do
+  target="${run_targets[i]}"
+  execute_target_command "$target"
 done
