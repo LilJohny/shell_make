@@ -24,6 +24,7 @@ execute_target_command(){
 
 makefile="shmakefile"
 next_arg_file=0
+available_targets=()
 targets=[]
 run_targets=()
 given_args=()
@@ -51,7 +52,7 @@ while IFS= read -r line; do
   if [[ $line == *":"* ]]; then
     current_command=""
     l_target="$(cut -d':' -f 1 <<<"$line")"
-
+    available_targets+=(l_target)
     if [[ $line == *: ]]; then
       targets["$l_target"]=""
     else
@@ -77,11 +78,17 @@ while IFS= read -r line; do
     fi
   fi
 done <"$makefile"
+
+
 if [[ "${#given_args[@]}" == 0 ]]; then
     generate_targets_need_run "${targets[0]}"
 else
     for var in "${given_args[@]}"
     do
+      if ! [[ " ${run_targets[@]} " =~ " ${var} " ]]; then
+          echo "$var" is not avaliable in Makefile
+          exit 1
+      fi
       generate_targets_need_run "$var"
     done
 fi
